@@ -69,3 +69,26 @@ function parse_files(power_path::String, water_path::String, link_path::String)
     # Return the network dictionary.
     return joint_network_data_mn
 end
+
+function parse_files(power_path::String, water_path::String, link_path::String,sbase_default)
+    joint_network_data = parse_link_file(link_path)
+    _IM.update_data!(joint_network_data, parse_power_file(power_path))
+    _IM.update_data!(joint_network_data, parse_water_file(water_path))
+    correct_network_data!(joint_network_data)
+
+    # Store whether or not each network uses per-unit data.
+    p_per_unit = get(joint_network_data["it"][_PMD.pmd_it_name], "per_unit", false)
+    w_per_unit = get(joint_network_data["it"][_WM.wm_it_name], "per_unit", false)
+
+    # Make the power and water data sets multinetwork.
+    joint_network_data_mn = make_multinetwork(joint_network_data,sbase_default)
+
+    # Prepare and correct pump load linking data.
+    assign_pump_loads!(joint_network_data_mn)
+
+    # Modify variable load properties in the power network.
+    _modify_loads!(joint_network_data_mn)
+
+    # Return the network dictionary.
+    return joint_network_data_mn
+end
